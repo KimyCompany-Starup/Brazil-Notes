@@ -96,7 +96,7 @@ export default function HomeScreen() {
       style={styles.container}
     >
       <View style={styles.inner}>
-        <Text style={styles.title}>Brazil Notes �🇹</Text>
+        <Text style={styles.title}>Brazil Notes 🇧🇷</Text>
         <Text style={styles.subtitle}>
           Escribe una palabra, verbo o frase. La IA la clasificará automáticamente en tu libreta.
         </Text>
@@ -145,13 +145,11 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: 
-  { 
+  container: { 
     flex: 1, 
     backgroundColor: '#000' 
   },
-  inner: 
-  { 
+  inner: { 
     flex: 1, 
     padding: 24, 
     justifyContent: 'center', 
@@ -159,24 +157,21 @@ const styles = StyleSheet.create({
     width: '100%', 
     alignSelf: 'center' 
   },
-  title: 
-  { 
+  title: { 
     fontSize: 32, 
     fontWeight: 'bold', 
     color: '#fff', 
     marginBottom: 12, 
     textAlign: 'center' 
   },
-  subtitle: 
-  { 
+  subtitle: { 
     fontSize: 15, 
     color: '#aaa', 
     marginBottom: 28, 
     textAlign: 'center', 
     lineHeight: 22 
   },
-  input: 
-  { 
+  input: { 
     backgroundColor: '#121212', 
     color: '#fff', 
     padding: 16, 
@@ -188,33 +183,28 @@ const styles = StyleSheet.create({
     minHeight: 100,
     textAlignVertical: 'top'
   },
-  button: 
-  { 
+  button: { 
     backgroundColor: '#208AEF', 
     padding: 16, 
     borderRadius: 12, 
     alignItems: 'center' 
   },
-  buttonDisabled: 
-  { 
+  buttonDisabled: { 
     opacity: 0.6 
   },
-  buttonText: 
-  { 
+  buttonText: { 
     color: '#fff', 
     fontWeight: 'bold', 
     fontSize: 16 
   },
-  modalOverlay: 
-  { 
+  modalOverlay: { 
     flex: 1, 
     backgroundColor: 'rgba(0,0,0,0.8)', 
     justifyContent: 'center', 
     alignItems: 'center', 
     padding: 20 
   },
-  modalContainer: 
-  { 
+  modalContainer: { 
     backgroundColor: '#181818', 
     borderRadius: 16, 
     padding: 24, 
@@ -224,30 +214,26 @@ const styles = StyleSheet.create({
     borderColor: '#333', 
     alignItems: 'center' 
   },
-  modalTitle: 
-  { 
+  modalTitle: { 
     fontSize: 20, 
     fontWeight: 'bold', 
     marginBottom: 12 
   },
-  modalMessage: 
-  { 
+  modalMessage: { 
     color: '#ddd', 
     fontSize: 15, 
     textAlign: 'center', 
     marginBottom: 20, 
     lineHeight: 22 
   },
-  modalButton: 
-  { 
+  modalButton: { 
     paddingVertical: 12, 
     paddingHorizontal: 30, 
     borderRadius: 10, 
     width: '100%', 
     alignItems: 'center' 
   },
-  modalButtonText: 
-  { 
+  modalButtonText: { 
     color: '#fff', 
     fontWeight: 'bold', 
     fontSize: 16 

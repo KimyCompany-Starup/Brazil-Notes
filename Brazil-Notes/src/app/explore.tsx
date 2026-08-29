@@ -14,11 +14,12 @@ interface NotaPortuguesa {
   pronunciacion?: string;
 }
 
+const STORAGE_KEY = '@brazil_notes_data';
+
 export default function ExploreScreen() {
   const [temasMap, setTemasMap] = useState<{ [key: string]: NotaPortuguesa[] }>({});
   const [refreshing, setRefreshing] = useState(false);
   
-  // Estado para controlar cuáles temas están abiertos
   const [expandedThemes, setExpandedThemes] = useState<{ [key: string]: boolean }>({});
 
   const [infoModalVisible, setInfoModalVisible] = useState(false);
@@ -42,7 +43,7 @@ export default function ExploreScreen() {
 
   const loadNotes = async () => {
     try {
-      const dataJSON = await AsyncStorage.getItem('@portuguese_notes_data');
+      const dataJSON = await AsyncStorage.getItem(STORAGE_KEY);
       if (dataJSON) {
         const notas: NotaPortuguesa[] = JSON.parse(dataJSON);
         
@@ -89,7 +90,7 @@ export default function ExploreScreen() {
     if (themeToDelete === null || noteToDeleteIndex === null) return;
 
     try {
-      const dataJSON = await AsyncStorage.getItem('@portuguese_notes_data');
+      const dataJSON = await AsyncStorage.getItem(STORAGE_KEY);
       if (!dataJSON) return;
 
       const notas: NotaPortuguesa[] = JSON.parse(dataJSON);
@@ -100,7 +101,7 @@ export default function ExploreScreen() {
 
       if (realIndex > -1) {
         notas.splice(realIndex, 1);
-        await AsyncStorage.setItem('@portuguese_notes_data', JSON.stringify(notas));
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(notas));
         await loadNotes();
         setDeleteModalVisible(false);
         showAlert("¡Éxito!", "La nota ha sido eliminada correctamente.", "success");
@@ -249,154 +250,179 @@ export default function ExploreScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
+  container: 
+  { 
     flex: 1, 
     backgroundColor: '#000' 
   },
-  contentContainer: { 
+  contentContainer: 
+  { 
     padding: 20, 
     paddingBottom: 60 
   },
-  header: { 
+  header: 
+  { 
     marginTop: 40, 
     marginBottom: 20, 
     paddingHorizontal: 4 
   },
-  title: { 
+  title: 
+  { 
     fontSize: 28, 
     fontWeight: 'bold', 
     color: '#fff', 
     marginBottom: 6 
   },
-  subtitle: { 
-    fontSize: 14, 
-    color: '#888' 
+  subtitle: 
+  { 
+    fontSize: 14, color: '#888' 
   },
-  sectionsWrapper: { 
+  sectionsWrapper: 
+  { 
     gap: 14 
   },
-  folderCard: {
-    backgroundColor: '#121212',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#262626',
-    overflow: 'hidden',
+  folderCard: 
+  { 
+    backgroundColor: '#121212', 
+    borderRadius: 14, 
+    borderWidth: 1, 
+    borderColor: '#262626', 
+    overflow: 'hidden' 
   },
-  folderHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+  folderHeader: 
+  { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    paddingVertical: 14, 
+    paddingHorizontal: 16 
   },
-  folderTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+  folderTitleRow: 
+  { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 10 
   },
-  folderEmoji: {
-    fontSize: 20,
+  folderEmoji: 
+  { 
+    fontSize: 20 
   },
-  folderTitleText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+  folderTitleText: 
+  { 
+    color: '#fff', 
+    fontSize: 18, 
+    fontWeight: 'bold' 
   },
-  emptyContainer: { 
+  emptyContainer: 
+  { 
     marginTop: 100, 
     alignItems: 'center', 
     paddingHorizontal: 20 
   },
-  emptyText: { 
+  emptyText: 
+  { 
     color: '#fff', 
     fontSize: 18, 
     fontWeight: '600', 
     marginBottom: 8, 
     textAlign: 'center' 
   },
-  emptySubtext: { 
+  emptySubtext: 
+  { 
     color: '#666', 
     fontSize: 14, 
     textAlign: 'center' 
   },
-  cardsList: { 
+  cardsList: 
+  { 
     gap: 12, 
     padding: 14, 
     borderTopWidth: 1, 
     borderTopColor: '#222', 
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#0a0a0a', 
     width: '100%' 
   },
-  card: { 
+  card: 
+  { 
     backgroundColor: '#161616', 
     borderRadius: 12, 
     padding: 16, 
     borderWidth: 1, 
-    borderColor: '#262626',
-    width: '100%',
-    overflow: 'hidden',
-    position: 'relative'
+    borderColor: '#262626', 
+    width: '100%', 
+    overflow: 'hidden', 
+    position: 'relative' 
   },
-  cardActions: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    flexDirection: 'row',
-    gap: 8,
-    zIndex: 10
+  cardActions: 
+  { 
+    position: 'absolute', 
+    top: 12, 
+    right: 12, 
+    flexDirection: 'row', 
+    gap: 8, 
+    zIndex: 10 
   },
-  actionIcon: {
-    padding: 4,
-    backgroundColor: '#202020',
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#333'
+  actionIcon: 
+  { 
+    padding: 4, 
+    backgroundColor: '#202020', 
+    borderRadius: 6, 
+    borderWidth: 1, 
+    borderColor: '#333' 
   },
-  wordHeader: { 
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    gap: 4,
-    marginBottom: 12,
-    paddingRight: 60,
-    borderBottomWidth: 1,
-    borderBottomColor: '#222',
-    paddingBottom: 10
+  wordHeader: 
+  { 
+    flexDirection: 'column', 
+    alignItems: 'flex-start', 
+    gap: 4, 
+    marginBottom: 12, 
+    paddingRight: 60, 
+    borderBottomWidth: 1, 
+    borderBottomColor: '#222', 
+    paddingBottom: 10 
   },
-  portugueseWord: { 
+  portugueseWord: 
+  { 
     fontSize: 20, 
     fontWeight: 'bold', 
     color: '#208AEF' 
   },
-  spanishMeaning: { 
+  spanishMeaning: 
+  { 
     fontSize: 15, 
     fontWeight: '500', 
     color: '#fff', 
     flexWrap: 'wrap' 
   },
-  exampleContainer: { 
+  exampleContainer: 
+  { 
     gap: 6, 
     backgroundColor: '#111', 
     padding: 10, 
     borderRadius: 8 
   },
-  examplePortuguese: { 
+  examplePortuguese: 
+  { 
     fontSize: 14, 
     color: '#eee', 
     flexWrap: 'wrap' 
   },
-  exampleSpanish: { 
+  exampleSpanish: 
+  { 
     fontSize: 13, 
     color: '#aaa', 
     flexWrap: 'wrap' 
   },
-  modalOverlay: { 
+  modalOverlay: 
+  { 
     flex: 1, 
     backgroundColor: 'rgba(0,0,0,0.8)', 
     justifyContent: 'center', 
     alignItems: 'center', 
     padding: 20 
   },
-  modalContainer: { 
+  modalContainer: 
+  { 
     backgroundColor: '#181818', 
     borderRadius: 16, 
     padding: 24, 
@@ -406,38 +432,44 @@ const styles = StyleSheet.create({
     borderColor: '#333', 
     alignItems: 'center' 
   },
-  modalTitle: { 
+  modalTitle: 
+  { 
     fontSize: 20, 
     fontWeight: 'bold', 
     marginBottom: 12 
   },
-  modalTitleInfo: { 
+  modalTitleInfo: 
+  { 
     fontSize: 20, 
     fontWeight: 'bold', 
     color: '#208AEF', 
     marginBottom: 12, 
     textAlign: 'center' 
   },
-  modalTitleError: { 
+  modalTitleError: 
+  { 
     fontSize: 20, 
     fontWeight: 'bold', 
     color: '#e74c3c', 
     marginBottom: 12, 
     textAlign: 'center' 
   },
-  modalMessage: { 
+  modalMessage: 
+  { 
     color: '#ddd', 
     fontSize: 15, 
     textAlign: 'center', 
     marginBottom: 20, 
     lineHeight: 22 
   },
-  modalButtonsRow: { 
+  modalButtonsRow: 
+  { 
     flexDirection: 'row', 
     gap: 12, 
     width: '100%' 
   },
-  modalButtonPrimary: { 
+  modalButtonPrimary: 
+  { 
     backgroundColor: '#208AEF', 
     paddingVertical: 12, 
     paddingHorizontal: 30, 
@@ -445,21 +477,24 @@ const styles = StyleSheet.create({
     width: '100%', 
     alignItems: 'center' 
   },
-  modalButtonCancel: { 
+  modalButtonCancel: 
+  { 
     flex: 1, 
     backgroundColor: '#333', 
     paddingVertical: 12, 
     borderRadius: 10, 
     alignItems: 'center' 
   },
-  modalButtonDelete: { 
+  modalButtonDelete: 
+  { 
     flex: 1, 
     backgroundColor: '#e74c3c', 
     paddingVertical: 12, 
     borderRadius: 10, 
     alignItems: 'center' 
   },
-  modalButtonText: { 
+  modalButtonText: 
+  { 
     color: '#fff', 
     fontWeight: 'bold', 
     fontSize: 15 
