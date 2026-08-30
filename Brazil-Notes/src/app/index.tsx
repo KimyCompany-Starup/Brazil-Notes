@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, Modal } from 'react-native';
-import { GoogleGenAI } from '@google/genai';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const ai = new GoogleGenAI({ apiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY });
 const STORAGE_KEY = '@brazil_notes_data';
 
 export default function HomeScreen() {
@@ -50,16 +48,58 @@ export default function HomeScreen() {
         }
       `;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
-        contents: prompt,
-      });
+      const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+      
+      let response;
+      let data;
+      let intentos = 3;
 
-      const textResponse = response.text;
+      for (let i = 0; i < intentos; i++) {
+        response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: {
+                responseMimeType: "application/json"
+              }
+            }),
+          }
+        );
+
+        data = await response.json();
+
+        if (!data.error) break;
+
+        // Detección de límite agotado o cuota excedida (Error 429)
+        if (data.error.code === 429 || data.error.status === 'RESOURCE_EXHAUSTED') {
+          throw new Error("Límite diario de peticiones alcanzado. Por favor, intenta de nuevo mañana o más tarde");
+        }
+
+        // Si el error es por alta demanda, reintentamos automáticamente
+        if (data.error.code === 503 || data.error.message?.includes('high demand')) {
+          if (i < intentos - 1) {
+            console.log(`Servidor ocupado, reintentando automáticamente (${i + 1}/${intentos})...`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            continue;
+          }
+        }
+        
+        break;
+      }
+
+      if (data.error) {
+        throw new Error(data.error.message || "Error al comunicarse con la IA");
+      }
+
+      const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!textResponse) throw new Error("No se obtuvo respuesta de la IA");
 
-      const cleanedJson = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
-      const parsedData = JSON.parse(cleanedJson);
+      const parsedData = JSON.parse(textResponse);
 
       const existingDataJSON = await AsyncStorage.getItem(STORAGE_KEY);
       const existingData = existingDataJSON ? JSON.parse(existingDataJSON) : [];
@@ -82,9 +122,9 @@ export default function HomeScreen() {
 
       setInputWord('');
       showAlert("¡Éxito!", "¡Palabra guardada y organizada por la IA con éxito!", "success");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error al procesar con Gemini:", error);
-      showAlert("¡Error!", "Hubo un error al clasificar la palabra con la IA.", "error");
+      showAlert("¡Límite o Error!", error.message || "Hubo un error al clasificar la palabra con la IA.", "error");
     } finally {
       setLoading(false);
     }
