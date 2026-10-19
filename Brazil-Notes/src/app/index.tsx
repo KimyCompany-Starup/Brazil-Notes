@@ -1,14 +1,30 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, Modal } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { 
+  Text, View, TextInput, TouchableOpacity, ActivityIndicator, 
+  KeyboardAvoidingView, Platform, Modal, ScrollView, TouchableWithoutFeedback, Keyboard, Animated 
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { styles } from '../styles';
 
 const STORAGE_KEY = '@brazil_notes_data';
+
+// --- Configuración Segura para Groq (exclusivamente desde .env) ---
+const getGroqConfig = () => {
+  const apiKey = (process.env.EXPO_PUBLIC_GROQ_API_KEY || "").trim();
+  const model = (process.env.EXPO_PUBLIC_GROQ_MODEL || "qwen/qwen3.8-27b").trim();
+
+  return { apiKey, model };
+};
 
 export default function HomeScreen() {
   const [inputWord, setInputWord] = useState('');
   const [loading, setLoading] = useState(false);
+  const [lastSaved, setLastSaved] = useState<any | null>(null);
 
-  // Estados para el Modal de Alerta Personalizada
+  // Animación de desvanecimiento para la tarjeta de vista previa
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  // Modal de Alertas
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
@@ -21,22 +37,75 @@ export default function HomeScreen() {
     setModalVisible(true);
   };
 
+  // Mostrar vista previa con Fade In y desvanecer tras 8 segundos
+  const triggerLastSavedAnimation = (data: any) => {
+    setLastSaved(data);
+    fadeAnim.setValue(0);
+
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+
+    setTimeout(() => {
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 1000,
+        useNativeDriver: true,
+      }).start(() => {
+        setLastSaved(null);
+      });
+    }, 8000);
+  };
+
+  // Conversor de errores técnicos a mensajes amigables
+  const getFriendlyErrorMessage = (errorMsg: string): string => {
+    const lower = errorMsg.toLowerCase();
+    if (lower.includes('api key') || lower.includes('unauthorized') || lower.includes('401')) {
+      return "Hubo un inconveniente con el servicio de organización. Inténtalo de nuevo más tarde.";
+    }
+    if (lower.includes('network') || lower.includes('fetch') || lower.includes('failed to fetch')) {
+      return "No pudimos conectarnos a la red. Revisa tu conexión a internet e inténtalo nuevamente.";
+    }
+    if (lower.includes('rate limit') || lower.includes('429')) {
+      return "El servicio está algo saturado en este momento. Espera unos segundos e inténtalo de nuevo.";
+    }
+    return "No pudimos procesar la palabra en este momento. Inténtalo otra vez en unos instantes.";
+  };
+
   const handleSaveWord = async () => {
-    if (!inputWord.trim()) return;
+    const cleanInput = inputWord.trim();
+    if (!cleanInput) {
+      showAlert("Campo vacío", "Escribe una palabra o frase en portugués para organizar.", "error");
+      return;
+    }
+
+    const { apiKey, model } = getGroqConfig();
+    if (!apiKey) {
+      showAlert(
+        "Servicio No Disponible", 
+        "No fue posible conectar con el servicio en este momento. Revisa tu archivo .env.", 
+        "error"
+      );
+      return;
+    }
+
     setLoading(true);
+    Keyboard.dismiss();
 
     try {
       const prompt = `
-        Analiza la siguiente palabra o nota de portugués: "${inputWord}".
+        Analiza la siguiente palabra o nota de portugués: "${cleanInput}".
         Clasifícala en una categoría temática adecuada en Español (por ejemplo: Comida, Verbos, Saludos, Viajes, etc.).
         Asigna también un único emoji representativo para ese tema (por ejemplo 👋 para Saludos, 🍔 para Comida). Si no hay un emoji claro, déjalo en blanco.
         Para la "pronunciacion", redacta una guía completa, ordenada y estructurada que incluya obligatoriamente:
         1. La pronunciación de la palabra principal de forma fluida y continua entre paréntesis (sin guiones por sílabas).
         2. La pronunciación de la oración o frase de ejemplo completa de forma fluida y continua entre paréntesis.
         3. Breves tips de fonética o aclaraciones útiles.
-        Escríbelo de forma muy clara indicando a qué corresponde cada una (por ejemplo: "Para la palabra principal..." y "Para la frase de ejemplo...").
+        Escríbelo de forma muy clara indicando a qué corresponde cada una.
 
-        Devuelve la respuesta estrictamente en formato JSON plano con las siguientes llaves exactas:
+        Devuelve la respuesta strictly en formato JSON plano con las siguientes llaves exactas y sin texto adicional ni bloques de código markdown:
         {
           "tema": "Nombre del tema",
           "emoji": "Emoji representativo o vacío",
@@ -48,83 +117,62 @@ export default function HomeScreen() {
         }
       `;
 
-      const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
-      
-      let response;
-      let data;
-      let intentos = 3;
-
-      for (let i = 0; i < intentos; i++) {
-        response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: {
-                responseMimeType: "application/json"
-              }
-            }),
-          }
-        );
-
-        data = await response.json();
-
-        if (!data.error) break;
-
-        // Detección de límite agotado o cuota excedida (Error 429)
-        if (data.error.code === 429 || data.error.status === 'RESOURCE_EXHAUSTED') {
-          throw new Error("Límite diario de peticiones alcanzado. Por favor, intenta de nuevo mañana o más tarde");
+      const response = await fetch(
+        'https://api.groq.com/openai/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: model,
+            messages: [
+              { role: "system", content: "Eres un asistente experto en portugués que responde únicamente en formato JSON plano sin bloques de código adicionales." },
+              { role: "user", content: prompt }
+            ],
+            response_format: { type: "json_object" },
+            temperature: 0.3
+          }),
         }
+      );
 
-        // Si el error es por alta demanda, reintentamos automáticamente
-        if (data.error.code === 503 || data.error.message?.includes('high demand')) {
-          if (i < intentos - 1) {
-            console.log(`Servidor ocupado, reintentando automáticamente (${i + 1}/${intentos})...`);
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            continue;
-          }
-        }
-        
-        break;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error?.message || "Error al comunicarse con la API de Groq");
       }
 
-      if (data.error) {
-        throw new Error(data.error.message || "Error al comunicarse con la IA");
-      }
-
-      const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      const textResponse = data.choices?.[0]?.message?.content;
       if (!textResponse) throw new Error("No se obtuvo respuesta de la IA");
 
-      const parsedData = JSON.parse(textResponse);
+      const cleanedJsonString = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+      const parsedData = JSON.parse(cleanedJsonString);
 
       const existingDataJSON = await AsyncStorage.getItem(STORAGE_KEY);
       const existingData = existingDataJSON ? JSON.parse(existingDataJSON) : [];
       
-      // --- VALIDACIÓN DE DUPLICADOS ---
+      // Validación de duplicados
       const palabraNueva = parsedData.palabraPortuguesa.trim().toLowerCase();
       const yaExiste = existingData.some(
         (nota: any) => nota.palabraPortuguesa.trim().toLowerCase() === palabraNueva
       );
 
       if (yaExiste) {
-        setLoading(false);
-        showAlert("Palabra duplicada", "Esa palabra ya está guardada en tus notas.", "error");
+        showAlert("Palabra duplicada", `"${parsedData.palabraPortuguesa}" ya está guardada en tus notas.`, "error");
         return;
       }
-      // --------------------------------
 
       const newData = [parsedData, ...existingData];
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
 
       setInputWord('');
-      showAlert("¡Éxito!", "¡Palabra guardada y organizada por la IA con éxito!", "success");
+      triggerLastSavedAnimation(parsedData);
+      showAlert("¡Guardado!", "Palabra organizada y guardada correctamente.", "success");
     } catch (error: any) {
-      console.error("Error al procesar con Gemini:", error);
-      showAlert("¡Límite o Error!", error.message || "Hubo un error al clasificar la palabra con la IA.", "error");
+      console.error("Error al procesar:", error);
+      const friendlyMsg = getFriendlyErrorMessage(error.message || "");
+      showAlert("Atención", friendlyMsg, "error");
     } finally {
       setLoading(false);
     }
@@ -135,35 +183,50 @@ export default function HomeScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
       style={styles.container}
     >
-      <View style={styles.inner}>
-        <Text style={styles.title}>Brazil Notes 🇧🇷</Text>
-        <Text style={styles.subtitle}>
-          Escribe una palabra, verbo o frase. La IA la clasificará automáticamente en tu libreta.
-        </Text>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }} keyboardShouldPersistTaps="handled">
+          <View style={styles.inner}>
+            <Text style={styles.title}>Brazil Notes 🇧🇷</Text>
+            <Text style={styles.subtitle}>
+              Escribe una palabra, verbo o frase. La IA la clasificará automáticamente en tu libreta.
+            </Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Ejemplo: 'Olá, como vai você?'"
-          placeholderTextColor="#666"
-          value={inputWord}
-          onChangeText={setInputWord}
-          multiline
-        />
+            <TextInput
+              style={styles.input}
+              placeholder="Ejemplo: 'Olá, como vai você?'"
+              placeholderTextColor="#666"
+              value={inputWord}
+              onChangeText={setInputWord}
+              multiline
+            />
 
-        <TouchableOpacity 
-          style={[styles.button, loading && styles.buttonDisabled]} 
-          onPress={handleSaveWord} 
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Organizar con IA</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+            <TouchableOpacity 
+              style={[styles.button, loading && styles.buttonDisabled]} 
+              onPress={handleSaveWord} 
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Organizar con IA</Text>
+              )}
+            </TouchableOpacity>
 
-      {/* Modal de Alerta Personalizada (Modo Oscuro) */}
+            {/* Vista previa limpia puramente informativa con mayor duración */}
+            {lastSaved && (
+              <Animated.View style={[styles.card, { marginTop: 24, opacity: fadeAnim }]}>
+                <Text style={styles.cardTitle}>
+                  {lastSaved.emoji} {lastSaved.tema} — Recién agregada
+                </Text>
+                <Text style={styles.portugueseText}>{lastSaved.palabraPortuguesa}</Text>
+                <Text style={styles.translationText}>{lastSaved.significado}</Text>
+              </Animated.View>
+            )}
+          </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+
+      {/* Modal de Alerta General */}
       <Modal transparent={true} visible={modalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -183,99 +246,3 @@ export default function HomeScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#000' 
-  },
-  inner: { 
-    flex: 1, 
-    padding: 24, 
-    justifyContent: 'center', 
-    maxWidth: 500, 
-    width: '100%', 
-    alignSelf: 'center' 
-  },
-  title: { 
-    fontSize: 32, 
-    fontWeight: 'bold', 
-    color: '#fff', 
-    marginBottom: 12, 
-    textAlign: 'center' 
-  },
-  subtitle: { 
-    fontSize: 15, 
-    color: '#aaa', 
-    marginBottom: 28, 
-    textAlign: 'center', 
-    lineHeight: 22 
-  },
-  input: { 
-    backgroundColor: '#121212', 
-    color: '#fff', 
-    padding: 16, 
-    borderRadius: 12, 
-    marginBottom: 20, 
-    borderWidth: 1, 
-    borderColor: '#262626',
-    fontSize: 16,
-    minHeight: 100,
-    textAlignVertical: 'top'
-  },
-  button: { 
-    backgroundColor: '#208AEF', 
-    padding: 16, 
-    borderRadius: 12, 
-    alignItems: 'center' 
-  },
-  buttonDisabled: { 
-    opacity: 0.6 
-  },
-  buttonText: { 
-    color: '#fff', 
-    fontWeight: 'bold', 
-    fontSize: 16 
-  },
-  modalOverlay: { 
-    flex: 1, 
-    backgroundColor: 'rgba(0,0,0,0.8)', 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    padding: 20 
-  },
-  modalContainer: { 
-    backgroundColor: '#181818', 
-    borderRadius: 16, 
-    padding: 24, 
-    width: '100%', 
-    maxWidth: 340, 
-    borderWidth: 1, 
-    borderColor: '#333', 
-    alignItems: 'center' 
-  },
-  modalTitle: { 
-    fontSize: 20, 
-    fontWeight: 'bold', 
-    marginBottom: 12 
-  },
-  modalMessage: { 
-    color: '#ddd', 
-    fontSize: 15, 
-    textAlign: 'center', 
-    marginBottom: 20, 
-    lineHeight: 22 
-  },
-  modalButton: { 
-    paddingVertical: 12, 
-    paddingHorizontal: 30, 
-    borderRadius: 10, 
-    width: '100%', 
-    alignItems: 'center' 
-  },
-  modalButtonText: { 
-    color: '#fff', 
-    fontWeight: 'bold', 
-    fontSize: 16 
-  }
-});
