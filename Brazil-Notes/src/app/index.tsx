@@ -4,16 +4,24 @@ import {
   KeyboardAvoidingView, Platform, Modal, ScrollView, TouchableWithoutFeedback, Keyboard, Animated 
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 import { styles } from '../styles';
 
 const STORAGE_KEY = '@brazil_notes_data';
 
-// --- Configuración Segura para Groq (exclusivamente desde .env) ---
+// --- Configuración Dinámica y Segura para Groq ---
 const getGroqConfig = () => {
-  const apiKey = (process.env.EXPO_PUBLIC_GROQ_API_KEY || "").trim();
-  const model = (process.env.EXPO_PUBLIC_GROQ_MODEL || "qwen/qwen3.8-27b").trim();
+  let apiKey = process.env.EXPO_PUBLIC_GROQ_API_KEY || "";
+  let model = process.env.EXPO_PUBLIC_GROQ_MODEL || "qwen/qwen3.8-27b";
 
-  return { apiKey, model };
+  if (!apiKey && Constants.expoConfig?.extra?.expoPublicGroqApiKey) {
+    apiKey = Constants.expoConfig.extra.expoPublicGroqApiKey;
+  }
+
+  return {
+    apiKey: apiKey.trim(),
+    model: model.trim()
+  };
 };
 
 export default function HomeScreen() {
@@ -21,10 +29,8 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(false);
   const [lastSaved, setLastSaved] = useState<any | null>(null);
 
-  // Animación de desvanecimiento para la tarjeta de vista previa
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  // Modal de Alertas
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalMessage, setModalMessage] = useState('');
@@ -37,7 +43,6 @@ export default function HomeScreen() {
     setModalVisible(true);
   };
 
-  // Mostrar vista previa con Fade In y desvanecer tras 8 segundos
   const triggerLastSavedAnimation = (data: any) => {
     setLastSaved(data);
     fadeAnim.setValue(0);
@@ -59,7 +64,6 @@ export default function HomeScreen() {
     }, 8000);
   };
 
-  // Conversor de errores técnicos a mensajes amigables
   const getFriendlyErrorMessage = (errorMsg: string): string => {
     const lower = errorMsg.toLowerCase();
     if (lower.includes('api key') || lower.includes('unauthorized') || lower.includes('401')) {
@@ -105,7 +109,7 @@ export default function HomeScreen() {
         3. Breves tips de fonética o aclaraciones útiles.
         Escríbelo de forma muy clara indicando a qué corresponde cada una.
 
-        Devuelve la respuesta strictly en formato JSON plano con las siguientes llaves exactas y sin texto adicional ni bloques de código markdown:
+        Devuelve la respuesta estrictamente en formato JSON plano con las siguientes llaves exactas y sin texto adicional ni bloques de código markdown:
         {
           "tema": "Nombre del tema",
           "emoji": "Emoji representativo o vacío",
@@ -152,7 +156,6 @@ export default function HomeScreen() {
       const existingDataJSON = await AsyncStorage.getItem(STORAGE_KEY);
       const existingData = existingDataJSON ? JSON.parse(existingDataJSON) : [];
       
-      // Validación de duplicados
       const palabraNueva = parsedData.palabraPortuguesa.trim().toLowerCase();
       const yaExiste = existingData.some(
         (nota: any) => nota.palabraPortuguesa.trim().toLowerCase() === palabraNueva
@@ -212,7 +215,6 @@ export default function HomeScreen() {
               )}
             </TouchableOpacity>
 
-            {/* Vista previa limpia puramente informativa con mayor duración */}
             {lastSaved && (
               <Animated.View style={[styles.card, { marginTop: 24, opacity: fadeAnim }]}>
                 <Text style={styles.cardTitle}>
@@ -226,7 +228,6 @@ export default function HomeScreen() {
         </ScrollView>
       </TouchableWithoutFeedback>
 
-      {/* Modal de Alerta General */}
       <Modal transparent={true} visible={modalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>

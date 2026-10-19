@@ -19,11 +19,8 @@ const STORAGE_KEY = '@brazil_notes_data';
 export default function ExploreScreen() {
   const [temasMap, setTemasMap] = useState<{ [key: string]: NotaPortuguesa[] }>({});
   const [refreshing, setRefreshing] = useState(false);
-  
-  // Estado para controlar cuáles temas están abiertos
   const [expandedThemes, setExpandedThemes] = useState<{ [key: string]: boolean }>({});
 
-  // Modales Informativos y de Eliminación
   const [infoModalVisible, setInfoModalVisible] = useState(false);
   const [selectedPronunciation, setSelectedPronunciation] = useState('');
 
@@ -36,7 +33,6 @@ export default function ExploreScreen() {
   const [alertMessage, setAlertMessage] = useState('');
   const [alertType, setAlertType] = useState<'success' | 'error'>('success');
 
-  // Modal y Estados para Editar Categoría / Palabra
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editingNote, setEditingNote] = useState<NotaPortuguesa | null>(null);
   const [editTema, setEditTema] = useState('');
@@ -122,7 +118,6 @@ export default function ExploreScreen() {
     }
   };
 
-  // Abrir modal de edición con los datos de la nota
   const openEditModal = (nota: NotaPortuguesa) => {
     setEditingNote(nota);
     setEditTema(nota.tema);
@@ -131,7 +126,6 @@ export default function ExploreScreen() {
     setEditModalVisible(true);
   };
 
-  // Guardar la edición o cambio de categoría
   const handleSaveEdit = async () => {
     if (!editingNote) return;
 
@@ -157,13 +151,11 @@ export default function ExploreScreen() {
           significado: nuevoSignificado,
         };
 
-        // Si se cambió el emoji de una categoría existente, actualizarlo en el grupo
         notas = notas.map(n => n.tema === nuevoTema ? { ...n, emoji: nuevoEmoji } : n);
 
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(notas));
         await loadNotes();
         
-        // Expandir la carpeta de destino para ver los cambios
         setExpandedThemes(prev => ({ ...prev, [nuevoTema]: true }));
 
         setEditModalVisible(false);
@@ -234,7 +226,6 @@ export default function ExploreScreen() {
                             <Ionicons name="information-circle-outline" size={20} color="#208AEF" />
                           </TouchableOpacity>
 
-                          {/* Botón para Editar o Mover Categoría */}
                           <TouchableOpacity 
                             onPress={() => openEditModal(item)} 
                             style={styles.actionIcon}
@@ -269,7 +260,7 @@ export default function ExploreScreen() {
         </View>
       )}
 
-      {/* MODAL: Guía de Pronunciación */}
+      {/* MODAL: Pronunciación */}
       <Modal transparent={true} visible={infoModalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -282,7 +273,7 @@ export default function ExploreScreen() {
         </View>
       </Modal>
 
-      {/* MODAL: Confirmar Eliminación */}
+      {/* MODAL: Eliminar */}
       <Modal transparent={true} visible={deleteModalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -300,7 +291,7 @@ export default function ExploreScreen() {
         </View>
       </Modal>
 
-      {/* MODAL: Alertas Generales */}
+      {/* MODAL: Alerta */}
       <Modal transparent={true} visible={alertModalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -318,7 +309,7 @@ export default function ExploreScreen() {
         </View>
       </Modal>
 
-      {/* MODAL: Editar o Mover Categoría con Lista de Categorías Existentes */}
+      {/* MODAL: Editar / Mover */}
       <Modal transparent={true} visible={editModalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -398,154 +389,180 @@ export default function ExploreScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
+  container: 
+  { 
     flex: 1, 
     backgroundColor: '#000' 
   },
-  contentContainer: { 
+  contentContainer: 
+  { 
     padding: 20, 
     paddingBottom: 60 
   },
-  header: { 
+  header: 
+  { 
     marginTop: 40, 
     marginBottom: 20, 
     paddingHorizontal: 4 
   },
-  title: { 
+  title: 
+  { 
     fontSize: 28, 
     fontWeight: 'bold', 
     color: '#fff', 
     marginBottom: 6 
   },
-  subtitle: { 
+  subtitle: 
+  { 
     fontSize: 14, 
     color: '#888' 
   },
-  sectionsWrapper: { 
+  sectionsWrapper: 
+  { 
     gap: 14 
   },
-  folderCard: {
-    backgroundColor: '#121212',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#262626',
-    overflow: 'hidden',
+  folderCard: 
+  { 
+    backgroundColor: '#121212', 
+    borderRadius: 14, 
+    borderWidth: 1, 
+    borderColor: '#262626', 
+    overflow: 'hidden' 
   },
-  folderHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+  folderHeader: 
+  { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    paddingVertical: 14, 
+    paddingHorizontal: 16 
   },
-  folderTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+  folderTitleRow: 
+  { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 10 
   },
-  folderEmoji: {
-    fontSize: 20,
+  folderEmoji: 
+  { 
+    fontSize: 20 
   },
-  folderTitleText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+  folderTitleText: 
+  { 
+    color: '#fff', 
+    fontSize: 18, 
+    fontWeight: 'bold' 
   },
-  emptyContainer: { 
+  emptyContainer: 
+  { 
     marginTop: 100, 
     alignItems: 'center', 
     paddingHorizontal: 20 
   },
-  emptyText: { 
+  emptyText: 
+  { 
     color: '#fff', 
     fontSize: 18, 
     fontWeight: '600', 
     marginBottom: 8, 
     textAlign: 'center' 
   },
-  emptySubtext: { 
+  emptySubtext: 
+  { 
     color: '#666', 
     fontSize: 14, 
     textAlign: 'center' 
   },
-  cardsList: { 
+  cardsList: 
+  { 
     gap: 12, 
     padding: 14, 
     borderTopWidth: 1, 
     borderTopColor: '#222', 
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#0a0a0a', 
     width: '100%' 
   },
-  card: { 
+  card: 
+  { 
     backgroundColor: '#161616', 
     borderRadius: 12, 
     padding: 16, 
     borderWidth: 1, 
-    borderColor: '#262626',
-    width: '100%',
-    overflow: 'hidden',
-    position: 'relative'
+    borderColor: '#262626', 
+    width: '100%', 
+    overflow: 'hidden', 
+    position: 'relative' 
   },
-  cardActions: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    flexDirection: 'row',
-    gap: 8,
-    zIndex: 10
+  cardActions: 
+  { 
+    position: 'absolute', 
+    top: 12, 
+    right: 12, 
+    flexDirection: 'row', 
+    gap: 8, 
+    zIndex: 10 
   },
-  actionIcon: {
-    padding: 4,
-    backgroundColor: '#202020',
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#333'
+  actionIcon: 
+  { 
+    padding: 4, 
+    backgroundColor: '#202020', 
+    borderRadius: 6, 
+    borderWidth: 1, 
+    borderColor: '#333' 
   },
-  wordHeader: { 
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    gap: 4,
-    marginBottom: 12,
-    paddingRight: 80,
-    borderBottomWidth: 1,
-    borderBottomColor: '#222',
-    paddingBottom: 10
+  wordHeader: 
+  { 
+    flexDirection: 'column', 
+    alignItems: 'flex-start', 
+    gap: 4, 
+    marginBottom: 12, 
+    paddingRight: 80, 
+    borderBottomWidth: 1, 
+    borderBottomColor: '#222', 
+    paddingBottom: 10 
   },
-  portugueseWord: { 
+  portugueseWord: 
+  { 
     fontSize: 20, 
     fontWeight: 'bold', 
     color: '#208AEF' 
   },
-  spanishMeaning: { 
+  spanishMeaning: 
+  { 
     fontSize: 15, 
     fontWeight: '500', 
     color: '#fff', 
     flexWrap: 'wrap' 
   },
-  exampleContainer: { 
+  exampleContainer: 
+  { 
     gap: 6, 
     backgroundColor: '#111', 
     padding: 10, 
     borderRadius: 8 
   },
-  examplePortuguese: { 
+  examplePortuguese: 
+  { 
     fontSize: 14, 
     color: '#eee', 
     flexWrap: 'wrap' 
   },
-  exampleSpanish: { 
+  exampleSpanish: 
+  { 
     fontSize: 13, 
     color: '#aaa', 
     flexWrap: 'wrap' 
   },
-  modalOverlay: { 
+  modalOverlay: 
+  { 
     flex: 1, 
     backgroundColor: 'rgba(0,0,0,0.8)', 
     justifyContent: 'center', 
     alignItems: 'center', 
     padding: 20 
   },
-  modalContainer: { 
+  modalContainer: 
+  { 
     backgroundColor: '#181818', 
     borderRadius: 16, 
     padding: 24, 
@@ -555,46 +572,53 @@ const styles = StyleSheet.create({
     borderColor: '#333', 
     alignItems: 'center' 
   },
-  modalTitle: { 
+  modalTitle: 
+  { 
     fontSize: 20, 
     fontWeight: 'bold', 
     marginBottom: 12 
   },
-  modalTitleInfo: { 
+  modalTitleInfo: 
+  { 
     fontSize: 20, 
     fontWeight: 'bold', 
     color: '#208AEF', 
     marginBottom: 12, 
     textAlign: 'center' 
   },
-  modalTitleError: { 
+  modalTitleError: 
+  { 
     fontSize: 20, 
     fontWeight: 'bold', 
     color: '#e74c3c', 
     marginBottom: 12, 
     textAlign: 'center' 
   },
-  modalTitleEdit: { 
+  modalTitleEdit: 
+  { 
     fontSize: 20, 
     fontWeight: 'bold', 
     color: '#2ecc71', 
     marginBottom: 8, 
     textAlign: 'center' 
   },
-  modalMessage: { 
+  modalMessage: 
+  { 
     color: '#ddd', 
     fontSize: 15, 
     textAlign: 'center', 
     marginBottom: 20, 
     lineHeight: 22 
   },
-  modalButtonsRow: { 
+  modalButtonsRow: 
+  { 
     flexDirection: 'row', 
     gap: 12, 
-    width: '100%',
-    marginTop: 10
+    width: '100%', 
+    marginTop: 10 
   },
-  modalButtonPrimary: { 
+  modalButtonPrimary: 
+  { 
     backgroundColor: '#208AEF', 
     paddingVertical: 12, 
     paddingHorizontal: 30, 
@@ -602,49 +626,55 @@ const styles = StyleSheet.create({
     width: '100%', 
     alignItems: 'center' 
   },
-  modalButtonCancel: { 
+  modalButtonCancel: 
+  { 
     flex: 1, 
     backgroundColor: '#333', 
     paddingVertical: 12, 
     borderRadius: 10, 
     alignItems: 'center' 
   },
-  modalButtonDelete: { 
+  modalButtonDelete: 
+  { 
     flex: 1, 
     backgroundColor: '#e74c3c', 
     paddingVertical: 12, 
     borderRadius: 10, 
     alignItems: 'center' 
   },
-  modalButtonSave: { 
+  modalButtonSave: 
+  { 
     flex: 1, 
     backgroundColor: '#2ecc71', 
     paddingVertical: 12, 
     borderRadius: 10, 
     alignItems: 'center' 
   },
-  modalButtonText: { 
+  modalButtonText: 
+  { 
     color: '#fff', 
     fontWeight: 'bold', 
     fontSize: 15 
   },
-  inputLabel: {
-    color: '#aaa',
-    fontSize: 12,
-    alignSelf: 'flex-start',
-    marginBottom: 4,
-    fontWeight: '600'
+  inputLabel: 
+  { 
+    color: '#aaa', 
+    fontSize: 12, 
+    alignSelf: 'flex-start', 
+    marginBottom: 4, 
+    fontWeight: '600' 
   },
-  editInput: {
-    width: '100%',
-    backgroundColor: '#222',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#333',
-    color: '#fff',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 14,
-    marginBottom: 12
+  editInput: 
+  { 
+    width: '100%', 
+    backgroundColor: '#222', 
+    borderRadius: 8, 
+    borderWidth: 1, 
+    borderColor: '#333', 
+    color: '#fff', 
+    paddingHorizontal: 12, 
+    paddingVertical: 8, 
+    fontSize: 14, 
+    marginBottom: 12 
   }
 });

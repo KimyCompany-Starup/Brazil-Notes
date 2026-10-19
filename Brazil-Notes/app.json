@@ -2,7 +2,7 @@
   "expo": {
     "name": "Brazil-Notes",
     "slug": "Brazil-Notes",
-    "version": "2.5",
+    "version": "2.6",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "brazilnotes",
@@ -33,9 +33,7 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
-      ],
-      "expo-image",
-      "expo-web-browser"
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
