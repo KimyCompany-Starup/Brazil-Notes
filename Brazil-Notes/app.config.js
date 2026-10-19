@@ -4,7 +4,7 @@ module.exports = {
   expo: {
     name: "Brazil-Notes",
     slug: "Brazil-Notes",
-    version: "3.0",
+    version: "3.3",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
     scheme: "brazilnotes",
