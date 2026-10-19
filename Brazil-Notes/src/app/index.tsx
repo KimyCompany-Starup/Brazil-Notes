@@ -9,19 +9,14 @@ import { styles } from '../styles';
 
 const STORAGE_KEY = '@brazil_notes_data';
 
-// --- Configuración Dinámica y Segura para Groq ---
+// --- Configuración Dinámica para Groq ---
 const getGroqConfig = () => {
-  let apiKey = process.env.EXPO_PUBLIC_GROQ_API_KEY || "";
-  let model = process.env.EXPO_PUBLIC_GROQ_MODEL || "qwen/qwen3.8-27b";
+  const extra = Constants.expoConfig?.extra || {};
+  
+  const apiKey = (extra.EXPO_PUBLIC_GROQ_API_KEY || process.env.EXPO_PUBLIC_GROQ_API_KEY || "").trim();
+  const model = (extra.EXPO_PUBLIC_GROQ_MODEL || process.env.EXPO_PUBLIC_GROQ_MODEL || "qwen/qwen3.8-27b").trim();
 
-  if (!apiKey && Constants.expoConfig?.extra?.expoPublicGroqApiKey) {
-    apiKey = Constants.expoConfig.extra.expoPublicGroqApiKey;
-  }
-
-  return {
-    apiKey: apiKey.trim(),
-    model: model.trim()
-  };
+  return { apiKey, model };
 };
 
 export default function HomeScreen() {

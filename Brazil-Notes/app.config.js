@@ -1,0 +1,53 @@
+require('dotenv').config();
+
+module.exports = {
+  expo: {
+    name: "Brazil-Notes",
+    slug: "Brazil-Notes",
+    version: "3.0",
+    orientation: "portrait",
+    icon: "./assets/images/icon.png",
+    scheme: "brazilnotes",
+    userInterfaceStyle: "automatic",
+    ios: {
+      icon: "./assets/images/icon.png"
+    },
+    android: {
+      adaptiveIcon: {
+        backgroundColor: "#E6F4FE",
+        foregroundImage: "./assets/images/android-icon-foreground.png",
+        backgroundImage: "./assets/images/android-icon-background.png",
+        monochromeImage: "./assets/images/android-icon-monochrome.png"
+      },
+      predictiveBackGestureEnabled: false,
+      package: "com.kimycompany.BrazilNotes"
+    },
+    web: {
+      output: "static",
+      favicon: "./assets/images/favicon.png"
+    },
+    plugins: [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#208AEF",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 76
+        }
+      ]
+    ],
+    experiments: {
+      typedRoutes: true,
+      reactCompiler: true
+    },
+    extra: {
+      router: {},
+      eas: {
+        projectId: "eb826817-fb1c-43e5-8893-0913b5632a67"
+      },
+      EXPO_PUBLIC_GROQ_API_KEY: process.env.EXPO_PUBLIC_GROQ_API_KEY,
+      EXPO_PUBLIC_GROQ_MODEL: process.env.EXPO_PUBLIC_GROQ_MODEL || "qwen/qwen3.8-27b"
+    }
+  }
+};
